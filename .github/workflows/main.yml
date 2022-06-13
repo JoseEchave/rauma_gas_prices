@@ -1,0 +1,32 @@
+
+name: get_gas_prices_rauma
+
+on:
+  schedule:
+    - cron: '0 15 * * *'  # Daily once (UTC, +3 hours in finland)
+
+jobs:
+  rauma_bot:
+    runs-on: macOS-latest
+    env:
+      REPO_KEY: ${{secrets.GITHUB_TOKEN}}
+      username: github-actions
+    steps:
+      - uses: actions/checkout@v2
+      - uses: r-lib/actions/setup-r@master
+      - name: Install rvest package
+        run: Rscript -e 'install.packages("rvest", dependencies = TRUE)'
+      - name: Save Wolt and Foodora delivery info to csv
+        run: Rscript get_prices_and_save.R
+       # Add new files in data folder, commit along with other modified files, push
+      - name: setup git config
+        run: |
+          # setup the username and email. I tend to use 'GitHub Actions Bot' with no email by default
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+      - name: commit
+        run: |
+          # Stage the file, commit and push
+          git add output/*
+          git commit -m "Add data for $(date)"
+          git push origin main
